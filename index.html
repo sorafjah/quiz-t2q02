@@ -110,7 +110,7 @@
         <!-- ===== クイズ実行画面 ===== -->
         <div id="quiz-screen" class="hidden bg-white p-6 sm:p-8 rounded-xl shadow-lg space-y-4">
             <div class="flex justify-between items-center">
-                <h2 id="quiz-title" class="text-xl font-bold text-gray-900">クイズタイトル</h2>
+                <h2 id="quiz-title" class="text-lg font-bold text-gray-900">クイズタイトル</h2>
                 <p id="quiz-progress" class="text-sm font-medium text-gray-500">1 / 10</p>
             </div>
             
@@ -119,7 +119,7 @@
             </div>
 
             <div class="bg-gray-50 p-4 rounded-lg">
-                <p id="question-text" class="text-lg font-semibold text-center min-h-[3em] flex items-center justify-center">問題文がここに表示されます。</p>
+                <p id="question-text" class="text-xl font-semibold text-center min-h-[3em] flex items-center justify-center">問題文がここに表示されます。</p>
             </div>
 
             <div id="options-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -140,12 +140,14 @@
                 <p id="feedback-explanation" class="text-gray-700"></p>
             </div>
 
-            <div class="flex gap-4">
-                <button id="quiz-back-to-home-btn" class="w-1/3 bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-lg transition duration-300">
-                    終了する
-                </button>
-                <button id="next-question-btn" class="w-2/3 bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg transition duration-300 hidden">
+            <div class="relative mt-6 flex h-14 items-center justify-center">
+                <!-- 次の問題へボタン (中央) -->
+                <button id="next-question-btn" class="w-2/3 max-w-xs bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg transition duration-300 hidden">
                     次の問題へ
+                </button>
+                <!-- 終了するテキストリンク (右端) -->
+                <button id="quiz-back-to-home-btn" class="absolute right-0 top-1/2 -translate-y-1/2 text-xs text-gray-400 hover:text-gray-600 underline transition">
+                    終了する
                 </button>
             </div>
         </div>
