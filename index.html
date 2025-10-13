@@ -116,10 +116,6 @@
 
         <!-- ===== クイズ実行画面 ===== -->
         <div id="quiz-screen" class="hidden bg-white p-6 sm:p-8 rounded-xl shadow-lg space-y-4">
-            <div class="flex justify-between items-center">
-                <h2 id="quiz-title" class="text-lg font-bold text-gray-900">クイズタイトル</h2>
-                <p id="quiz-progress" class="text-sm font-medium text-gray-500">1 / 10</p>
-            </div>
             
             <div id="question-img-container" class="hidden my-4">
                     <img id="question-img" src="" class="w-full h-auto object-contain rounded-lg aspect-video mx-auto">
@@ -131,32 +127,35 @@
 
             <div id="options-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <!-- 選択肢A -->
-                <button id="option-a-btn" data-option="A" class="option-btn flex flex-col items-center justify-center p-2 min-h-[10rem] border-4 border-transparent rounded-xl hover:border-blue-500 focus:border-blue-500 transition-all duration-300 space-y-2">
+                <button id="option-a-btn" data-option="A" class="option-btn flex flex-col items-center justify-center p-2 border-4 border-transparent rounded-xl hover:border-blue-500 focus:border-blue-500 transition-all duration-300 space-y-2">
                     <img id="option-a-img" src="" class="w-full h-auto object-contain rounded-lg aspect-[4/3] hidden">
                     <p id="option-a-text" class="font-semibold text-center px-2">選択肢A</p>
                 </button>
                 <!-- 選択肢B -->
-                <button id="option-b-btn" data-option="B" class="option-btn flex flex-col items-center justify-center p-2 min-h-[10rem] border-4 border-transparent rounded-xl hover:border-blue-500 focus:border-blue-500 transition-all duration-300 space-y-2">
+                <button id="option-b-btn" data-option="B" class="option-btn flex flex-col items-center justify-center p-2 border-4 border-transparent rounded-xl hover:border-blue-500 focus:border-blue-500 transition-all duration-300 space-y-2">
                     <img id="option-b-img" src="" class="w-full h-auto object-contain rounded-lg aspect-[4/3] hidden">
                     <p id="option-b-text" class="font-semibold text-center px-2">選択肢B</p>
                 </button>
             </div>
             
-            <div id="feedback-container" class="hidden p-4 rounded-lg space-y-2">
-                <h3 id="feedback-result" class="text-2xl font-bold text-center"></h3>
-                <p id="feedback-explanation" class="text-gray-700"></p>
+            <div id="feedback-container" class="hidden p-4 rounded-lg space-y-4">
+                <div class="text-center">
+                    <h3 id="feedback-result" class="text-2xl font-bold"></h3>
+                    <p id="feedback-explanation" class="text-gray-700 mt-1"></p>
+                </div>
+                <div class="flex justify-between items-center pt-2">
+                    <button id="quiz-back-to-home-btn" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-6 rounded-lg transition duration-300 whitespace-nowrap">
+                        終了する
+                    </button>
+                    <button id="next-question-btn" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-6 rounded-lg transition duration-300 whitespace-nowrap">
+                        次へ
+                    </button>
+                </div>
             </div>
+            
+            <!--レイアウト用の空のコンテナ-->
+            <div class="h-14"></div>
 
-            <div class="relative mt-6 flex h-14 items-center justify-center">
-                <!-- 次の問題へボタン (中央) -->
-                <button id="next-question-btn" class="w-2/3 max-w-xs bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg transition duration-300 hidden">
-                    次の問題へ
-                </button>
-                <!-- 終了するテキストリンク (右端) -->
-                <button id="quiz-back-to-home-btn" class="absolute right-0 top-1/2 -translate-y-1/2 text-xs text-gray-400 hover:text-gray-600 underline transition">
-                    終了する
-                </button>
-            </div>
         </div>
         
         <!-- ===== ローディング表示 ===== -->
@@ -191,8 +190,6 @@
         const addQuestionBtn = document.getElementById('add-question-btn');
         const saveQuizBtn = document.getElementById('save-quiz-btn');
         const backToHomeBtn = document.getElementById('back-to-home-btn');
-        const quizTitle = document.getElementById('quiz-title');
-        const quizProgress = document.getElementById('quiz-progress');
         const questionText = document.getElementById('question-text');
         const questionImgContainer = document.getElementById('question-img-container');
         const questionImg = document.getElementById('question-img');
@@ -557,7 +554,6 @@
                         showMessage("クイズに問題がありません。編集画面で問題を追加してください。"); return; 
                     }
                     resetQuizState();
-                    quizTitle.textContent = quizNameInputHome.value;
                     displayQuestion(0);
                     showScreen('quiz');
                 } else { showMessage("指定されたクイズが見つかりませんでした。"); }
@@ -565,7 +561,15 @@
             } finally { showLoading(false); }
         }
         
-        function resetQuizState() { currentQuestionIndex = 0; score = 0; feedbackContainer.classList.add('hidden'); nextQuestionBtn.classList.add('hidden'); optionABtn.disabled = false; optionBBtn.disabled = false; optionsContainer.classList.remove('hidden'); }
+        function resetQuizState() { 
+            currentQuestionIndex = 0; 
+            score = 0; 
+            feedbackContainer.classList.add('hidden'); 
+            nextQuestionBtn.classList.add('hidden'); 
+            optionABtn.disabled = false; 
+            optionBBtn.disabled = false; 
+            optionsContainer.classList.remove('hidden'); 
+        }
         
         function displayQuestion(index) {
             if (!currentQuizData || !currentQuizData.questions) return;
@@ -575,25 +579,37 @@
             // 質問画像の表示制御（コンテナも一緒に）
             const hasQImg = !!(question.questionImageUrl && /^https?:\/\//.test(question.questionImageUrl));
             if (hasQImg) {
-                questionImgContainer.classList.remove('hidden'); // ← コンテナを表示
-                updatePreviewImage(question.questionImageUrl, questionImg); // imgも表示
+                questionImgContainer.classList.remove('hidden');
+                updatePreviewImage(question.questionImageUrl, questionImg);
             } else {
-                questionImgContainer.classList.add('hidden');    // ← コンテナを非表示
-                updatePreviewImage('', questionImg);             // 念のためimgも隠す
+                questionImgContainer.classList.add('hidden');
+                updatePreviewImage('', questionImg);
             }
 
             questionText.textContent = question.question;
-            quizProgress.textContent = `${index + 1} / ${currentQuizData.questions.length}`;
 
             // 選択肢A/B
             optionAText.textContent = question.options.A.text;
-            updatePreviewImage(question.options.A.imageUrl, optionAImg);
+            if (updatePreviewImage(question.options.A.imageUrl, optionAImg)) {
+                optionABtn.classList.add('min-h-[10rem]');
+                optionABtn.classList.remove('py-6');
+            } else {
+                optionABtn.classList.remove('min-h-[10rem]');
+                optionABtn.classList.add('py-6');
+            }
 
             optionBText.textContent = question.options.B.text;
-            updatePreviewImage(question.options.B.imageUrl, optionBImg);
+            if (updatePreviewImage(question.options.B.imageUrl, optionBImg)) {
+                optionBBtn.classList.add('min-h-[10rem]');
+                optionBBtn.classList.remove('py-6');
+            } else {
+                optionBBtn.classList.remove('min-h-[10rem]');
+                optionBBtn.classList.add('py-6');
+            }
 
             // 状態リセット
             feedbackContainer.classList.add('hidden');
+            quizBackToHomeBtn.classList.add('hidden'); // 「終了する」ボタンを隠す
             nextQuestionBtn.classList.add('hidden');
             optionABtn.disabled = false;
             optionBBtn.disabled = false;
@@ -610,18 +626,19 @@
             const correctBtn = correctOption === 'A' ? optionABtn : optionBBtn;
             if (selectedOption === correctOption) {
                 feedbackResult.textContent = "正解！";
-                feedbackResult.className = "text-2xl font-bold text-center text-green-500";
+                feedbackResult.className = "text-2xl font-bold text-green-500";
                 selectedBtn.classList.add('border-green-500');
                 score++;
             } else {
                 feedbackResult.textContent = "ざんねん…";
-                feedbackResult.className = "text-2xl font-bold text-center text-red-500";
+                feedbackResult.className = "text-2xl font-bold text-red-500";
                 selectedBtn.classList.add('border-gray-400');
                 correctBtn.classList.add('border-green-500');
             }
             feedbackExplanation.textContent = question.explanation;
             feedbackContainer.classList.remove('hidden');
             nextQuestionBtn.classList.remove('hidden');
+            quizBackToHomeBtn.classList.remove('hidden'); // 「終了する」ボタンを表示
         }
         
         function displayNextQuestion() {
@@ -634,11 +651,14 @@
             questionText.textContent = `クイズ終了！あなたのスコアは...`;
             optionsContainer.classList.add('hidden');
             questionImgContainer.classList.add('hidden');
+
             feedbackResult.textContent = `${currentQuizData.questions.length}問中 ${score}問正解！`;
-            feedbackResult.className = "text-3xl font-bold text-center text-blue-600";
+            feedbackResult.className = "text-3xl font-bold text-blue-600";
             feedbackExplanation.textContent = "お疲れ様でした。「終了する」ボタンでホームに戻ります。";
+            
             feedbackContainer.classList.remove('hidden');
-            nextQuestionBtn.classList.add('hidden');
+            nextQuestionBtn.classList.add('hidden'); // 「次へ」は隠す
+            quizBackToHomeBtn.classList.remove('hidden'); // 「終了する」は表示
         }
 
         // --- 初期化処理 ---
@@ -647,5 +667,4 @@
     </script>
 </body>
 </html>
-
 
