@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>画像付き2択クイズアプリ (複数問題対応版)</title>
+    <title>画像付き2択クイズアプリ (編集機能強化版)</title>
     <!-- Tailwind CSSを読み込み -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- Google Fonts (Inter) を読み込み -->
@@ -83,18 +83,18 @@
             </div>
 
             <div class="space-y-2">
-                 <label for="json-input" class="block text-sm font-medium text-gray-700">
-                    JSONデータ
-                    <a href="https://chatgpt.com/g/g-68e79a810ad48191b8433cf72d5ea89b-2ze-json" target="_blank" rel="noopener noreferrer" class="ml-2 text-sm text-blue-600 underline hover:text-blue-800">
-                        (GPTsでJSONを生成)
-                    </a>
-                </label>
+                    <label for="json-input" class="block text-sm font-medium text-gray-700">
+                        JSONデータ (ここを元に編集フォームが生成されます)
+                        <a href="https://chatgpt.com/g/g-68e79a810ad48191b8433cf72d5ea89b-2ze-json" target="_blank" rel="noopener noreferrer" class="ml-2 text-sm text-blue-600 underline hover:text-blue-800">
+                            (GPTsでJSONを生成)
+                        </a>
+                    </label>
                 <textarea id="json-input" rows="8" class="w-full p-3 border border-gray-300 rounded-lg font-mono text-sm" placeholder="ここにGPTsで生成したJSONを貼り付けます"></textarea>
             </div>
             
-            <!-- 画像URL入力欄を動的に生成するコンテナ -->
-            <div id="image-inputs-container" class="space-y-6 border-t border-gray-200 pt-6">
-                <p class="text-center text-gray-500">JSONを貼り付けると、ここに画像URLの入力欄が表示されます。</p>
+            <!-- 問題編集フォームを動的に生成するコンテナ -->
+            <div id="edit-forms-container" class="space-y-6 border-t border-gray-200 pt-6">
+                <p class="text-center text-gray-500">JSONを貼り付けると、ここに編集フォームが表示されます。</p>
             </div>
 
             <div class="flex gap-4">
@@ -115,7 +115,7 @@
             </div>
             
             <div id="question-img-container" class="hidden my-4">
-                 <img id="question-img" src="" class="w-full h-auto object-contain rounded-lg aspect-video mx-auto bg-gray-100">
+                    <img id="question-img" src="" class="w-full h-auto object-contain rounded-lg aspect-video mx-auto">
             </div>
 
             <div class="bg-gray-50 p-4 rounded-lg">
@@ -125,12 +125,12 @@
             <div id="options-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <!-- 選択肢A -->
                 <button id="option-a-btn" data-option="A" class="option-btn flex flex-col items-center justify-center p-2 min-h-[10rem] border-4 border-transparent rounded-xl hover:border-blue-500 focus:border-blue-500 transition-all duration-300 space-y-2">
-                    <img id="option-a-img" src="" class="w-full h-auto object-contain rounded-lg aspect-[4/3] hidden bg-gray-100">
+                    <img id="option-a-img" src="" class="w-full h-auto object-contain rounded-lg aspect-[4/3] hidden">
                     <p id="option-a-text" class="font-semibold text-center px-2">選択肢A</p>
                 </button>
                 <!-- 選択肢B -->
                 <button id="option-b-btn" data-option="B" class="option-btn flex flex-col items-center justify-center p-2 min-h-[10rem] border-4 border-transparent rounded-xl hover:border-blue-500 focus:border-blue-500 transition-all duration-300 space-y-2">
-                    <img id="option-b-img" src="" class="w-full h-auto object-contain rounded-lg aspect-[4/3] hidden bg-gray-100">
+                    <img id="option-b-img" src="" class="w-full h-auto object-contain rounded-lg aspect-[4/3] hidden">
                     <p id="option-b-text" class="font-semibold text-center px-2">選択肢B</p>
                 </button>
             </div>
@@ -166,8 +166,8 @@
     <!-- Firebase SDK -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, doc, getDoc, setDoc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // --- DOM要素の取得 ---
         const screens = { home: document.getElementById('home-screen'), edit: document.getElementById('edit-screen'), quiz: document.getElementById('quiz-screen'), };
@@ -180,7 +180,7 @@
         const editQuizBtn = document.getElementById('edit-quiz-btn'); 
         const quizNameEdit = document.getElementById('quiz-name-edit');
         const jsonInput = document.getElementById('json-input');
-        const imageInputsContainer = document.getElementById('image-inputs-container');
+        const editFormsContainer = document.getElementById('edit-forms-container');
         const saveQuizBtn = document.getElementById('save-quiz-btn');
         const backToHomeBtn = document.getElementById('back-to-home-btn');
         const quizTitle = document.getElementById('quiz-title');
@@ -207,19 +207,23 @@
         // --- Firebase初期化 ---
         async function initializeFirebase() {
             try {
-                const firebaseConfig = {
-                  apiKey: "AIzaSyDwCD9JK4dahhbNW9ChLKDR6EmWecJbZuA",
-                  authDomain: "quiz-t2q.firebaseapp.com",
-                  projectId: "quiz-t2q",
-                  storageBucket: "quiz-t2q.appspot.com",
-                  messagingSenderId: "1035883523561",
-                  appId: "1:1035883523561:web:819c8e84be99bfc1ff2f78",
-                  measurementId: "G-J6JCMZN14J"
-                };
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : { apiKey: "YOUR_API_KEY", authDomain: "YOUR_AUTH_DOMAIN", projectId: "YOUR_PROJECT_ID" };
                 const app = initializeApp(firebaseConfig);
                 db = getFirestore(app);
                 auth = getAuth(app);
-                onAuthStateChanged(auth, async (user) => { user ? userId = user.uid : await signInAnonymously(auth); });
+                // setLogLevel('debug');
+                onAuthStateChanged(auth, async (user) => {
+                    if (user) {
+                        userId = user.uid;
+                    } else {
+                         if (typeof __initial_auth_token !== 'undefined') {
+                            await signInWithCustomToken(auth, __initial_auth_token);
+                        } else {
+                            await signInAnonymously(auth);
+                        }
+                    }
+                });
             } catch (error) { console.error("Firebaseの初期化に失敗しました:", error); showMessage("Firebase初期化エラー", 5000); }
         }
 
@@ -227,12 +231,8 @@
         function showScreen(screenName) { Object.values(screens).forEach(s => s.classList.add('hidden')); screens[screenName]?.classList.remove('hidden'); }
         function showLoading(show) { loadingIndicator.classList.toggle('hidden', !show); }
         function showMessage(message, duration = 3000, type = 'error') {
-            messageBox.classList.remove('bg-red-500', 'bg-orange-500');
-            if (type === 'success') {
-                messageBox.classList.add('bg-orange-500');
-            } else {
-                messageBox.classList.add('bg-red-500');
-            }
+            messageBox.classList.remove('bg-red-500', 'bg-green-500');
+            messageBox.classList.add(type === 'success' ? 'bg-green-500' : 'bg-red-500');
             messageText.textContent = message;
             messageBox.classList.remove('hidden');
             setTimeout(() => messageBox.classList.add('hidden'), duration);
@@ -255,101 +255,137 @@
         function resetEditScreen() {
             quizNameEdit.value = '';
             jsonInput.value = '';
-            imageInputsContainer.innerHTML = '<p class="text-center text-gray-500">JSONを貼り付けると、ここに画像URLの入力欄が表示されます。</p>';
+            editFormsContainer.innerHTML = '<p class="text-center text-gray-500">JSONを貼り付けると、ここに編集フォームが表示されます。</p>';
         }
 
         function handleJsonInputChange() {
             const jsonText = jsonInput.value.trim();
-            if (!jsonText) { resetEditScreen(); return; }
+            if (!jsonText) { editFormsContainer.innerHTML = '<p class="text-center text-gray-500">JSONを貼り付けると、ここに編集フォームが表示されます。</p>'; return; }
             try {
                 let data = JSON.parse(jsonText);
                 if (Array.isArray(data)) { data = { questions: data }; }
-                if (data && Array.isArray(data.questions)) { renderImageInputs(data.questions); } 
-                else { imageInputsContainer.innerHTML = '<p class="text-center text-red-500">JSONに`questions`配列が含まれていません。</p>'; }
-            } catch (e) { imageInputsContainer.innerHTML = '<p class="text-center text-yellow-600">正しいJSON形式で入力してください...</p>'; }
+                if (data && Array.isArray(data.questions)) { renderEditForms(data.questions); } 
+                else { editFormsContainer.innerHTML = '<p class="text-center text-red-500">JSONに`questions`配列が含まれていません。</p>'; }
+            } catch (e) { editFormsContainer.innerHTML = '<p class="text-center text-yellow-600">正しいJSON形式で入力してください...</p>'; }
         }
 
-        function renderImageInputs(questions) {
-            imageInputsContainer.innerHTML = ''; 
+        function renderEditForms(questions) {
+            editFormsContainer.innerHTML = ''; 
             questions.forEach((question, index) => {
-                const questionImageUrl = question.questionImageUrl || '';
-                const imageUrlA = question.options?.A?.imageUrl || '';
-                const imageUrlB = question.options?.B?.imageUrl || '';
+                const qText = question.question || '';
+                const qImgUrl = question.questionImageUrl || '';
                 const textA = question.options?.A?.text || '';
+                const imgUrlA = question.options?.A?.imageUrl || '';
                 const textB = question.options?.B?.text || '';
+                const imgUrlB = question.options?.B?.imageUrl || '';
+                const answer = question.answer || 'A';
 
-                const inputBlock = document.createElement('div');
-                inputBlock.className = 'space-y-4 p-4 border border-gray-200 rounded-lg';
-                inputBlock.innerHTML = `
+                const formBlock = document.createElement('div');
+                formBlock.className = 'space-y-4 p-4 border border-gray-200 rounded-lg bg-white';
+                formBlock.innerHTML = `
                     <h3 class="font-bold text-gray-800">問題 ${index + 1}</h3>
                     <div class="space-y-2">
-                         <label for="image-url-q-${index}" class="block text-sm font-medium text-gray-700">問題文の画像URL（任意）</label>
-                         <input type="url" id="image-url-q-${index}" data-index="${index}" data-option="Q" class="image-url-input w-full p-3 border border-gray-300 rounded-lg" placeholder="https://..." value="${questionImageUrl}">
-                         <img id="preview-q-${index}" src="${questionImageUrl}" alt="問題文のプレビュー" class="mt-2 w-full h-auto object-contain bg-gray-100 rounded-lg aspect-video ${questionImageUrl ? '' : 'hidden'}">
+                        <label for="question-text-edit-${index}" class="block text-sm font-medium text-gray-700">問題文</label>
+                        <textarea id="question-text-edit-${index}" class="w-full p-2 border border-gray-300 rounded-lg" rows="2">${qText}</textarea>
                     </div>
-                    <p class="text-sm text-gray-600 bg-gray-50 p-2 rounded-md">Q: ${question.question}</p>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="space-y-2">
-                            <p class="text-sm text-gray-800 font-semibold bg-gray-50 p-2 rounded-md">選択肢A: ${textA}</p>
-                            <label for="image-url-a-${index}" class="block text-sm font-medium text-gray-700">画像URL（任意）</label>
-                            <input type="url" id="image-url-a-${index}" data-index="${index}" data-option="A" class="image-url-input w-full p-3 border border-gray-300 rounded-lg" placeholder="https://..." value="${imageUrlA}">
-                            <img id="preview-a-${index}" src="${imageUrlA}" alt="選択肢Aのプレビュー" class="mt-2 w-full h-auto object-contain bg-gray-100 rounded-lg aspect-[4/3] ${imageUrlA ? '' : 'hidden'}">
+                    <div class="space-y-2">
+                        <label for="image-url-q-${index}" class="block text-sm font-medium text-gray-700">問題文の画像URL (任意)</label>
+                        <input type="url" id="image-url-q-${index}" data-index="${index}" data-type="Q" class="image-url-input w-full p-2 border border-gray-300 rounded-lg" placeholder="https://..." value="${qImgUrl}">
+                        <img id="preview-q-${index}" src="${qImgUrl}" class="mt-2 w-full h-auto object-contain rounded-lg aspect-video ${qImgUrl ? '' : 'hidden'}">
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div id="option-container-a-${index}" class="space-y-2 p-3 rounded-lg border ${answer === 'A' ? 'bg-green-50 border-green-400' : 'bg-gray-50 border-gray-200'}">
+                            <div class="flex items-center gap-x-2"><input id="answer-a-${index}" name="answer-${index}" type="radio" value="A" class="answer-radio h-4 w-4" data-index="${index}" ${answer === 'A' ? 'checked' : ''}><label for="answer-a-${index}">選択肢A (正解にする)</label></div>
+                            <label for="option-text-a-${index}" class="text-sm font-medium">テキスト</label><input type="text" id="option-text-a-${index}" class="w-full p-2 border border-gray-300 rounded-lg" value="${textA}">
+                            <label for="image-url-a-${index}" class="text-sm font-medium">画像URL (任意)</label><input type="url" id="image-url-a-${index}" data-index="${index}" data-type="A" class="image-url-input w-full p-2 border border-gray-300 rounded-lg" placeholder="https://..." value="${imgUrlA}">
+                            <img id="preview-a-${index}" src="${imgUrlA}" class="mt-2 w-full h-auto object-contain rounded-lg aspect-[4/3] ${imgUrlA ? '' : 'hidden'}">
                         </div>
-                        <div class="space-y-2">
-                            <p class="text-sm text-gray-800 font-semibold bg-gray-50 p-2 rounded-md">選択肢B: ${textB}</p>
-                            <label for="image-url-b-${index}" class="block text-sm font-medium text-gray-700">画像URL（任意）</label>
-                            <input type="url" id="image-url-b-${index}" data-index="${index}" data-option="B" class="image-url-input w-full p-3 border border-gray-300 rounded-lg" placeholder="https://..." value="${imageUrlB}">
-                            <img id="preview-b-${index}" src="${imageUrlB}" alt="選択肢Bのプレビュー" class="mt-2 w-full h-auto object-contain bg-gray-100 rounded-lg aspect-[4/3] ${imageUrlB ? '' : 'hidden'}">
+                        <div id="option-container-b-${index}" class="space-y-2 p-3 rounded-lg border ${answer === 'B' ? 'bg-green-50 border-green-400' : 'bg-gray-50 border-gray-200'}">
+                           <div class="flex items-center gap-x-2"><input id="answer-b-${index}" name="answer-${index}" type="radio" value="B" class="answer-radio h-4 w-4" data-index="${index}" ${answer === 'B' ? 'checked' : ''}><label for="answer-b-${index}">選択肢B (正解にする)</label></div>
+                           <label for="option-text-b-${index}" class="text-sm font-medium">テキスト</label><input type="text" id="option-text-b-${index}" class="w-full p-2 border border-gray-300 rounded-lg" value="${textB}">
+                           <label for="image-url-b-${index}" class="text-sm font-medium">画像URL (任意)</label><input type="url" id="image-url-b-${index}" data-index="${index}" data-type="B" class="image-url-input w-full p-2 border border-gray-300 rounded-lg" placeholder="https://..." value="${imgUrlB}">
+                           <img id="preview-b-${index}" src="${imgUrlB}" class="mt-2 w-full h-auto object-contain rounded-lg aspect-[4/3] ${imgUrlB ? '' : 'hidden'}">
                         </div>
-                    </div>`;
-                imageInputsContainer.appendChild(inputBlock);
+                    </div>
+                `;
+                editFormsContainer.appendChild(formBlock);
             });
-            document.querySelectorAll('.image-url-input').forEach(input => {
+            setupEditFormEventListeners();
+        }
+
+        function setupEditFormEventListeners() {
+             document.querySelectorAll('.image-url-input').forEach(input => {
                 input.addEventListener('input', (e) => {
-                    const index = e.target.dataset.index;
-                    const option = e.target.dataset.option;
-                    const previewImg = document.getElementById(`preview-${option.toLowerCase()}-${index}`);
+                    const previewImg = document.getElementById(`preview-${e.target.dataset.type.toLowerCase()}-${e.target.dataset.index}`);
                     updatePreviewImage(e.target.value, previewImg);
+                });
+            });
+             document.querySelectorAll('.answer-radio').forEach(radio => {
+                radio.addEventListener('change', (e) => {
+                    const index = e.target.dataset.index;
+                    const containerA = document.getElementById(`option-container-a-${index}`);
+                    const containerB = document.getElementById(`option-container-b-${index}`);
+                    if (e.target.value === 'A' && e.target.checked) {
+                        containerA.classList.replace('bg-gray-50', 'bg-green-50'); containerA.classList.replace('border-gray-200', 'border-green-400');
+                        containerB.classList.replace('bg-green-50', 'bg-gray-50'); containerB.classList.replace('border-green-400', 'border-gray-200');
+                    } else {
+                        containerB.classList.replace('bg-gray-50', 'bg-green-50'); containerB.classList.replace('border-gray-200', 'border-green-400');
+                        containerA.classList.replace('bg-green-50', 'bg-gray-50'); containerA.classList.replace('border-green-400', 'border-gray-200');
+                    }
                 });
             });
         }
         
         function updatePreviewImage(url, imgElement) {
-            if (url && (url.startsWith('http://') || url.startsWith('https://'))) {
-                imgElement.src = url;
-                imgElement.classList.remove('hidden');
-            } else {
-                 imgElement.src = '';
-                 imgElement.classList.add('hidden');
-            }
+            const isValidUrl = url && (url.startsWith('http://') || url.startsWith('https://'));
+            imgElement.src = isValidUrl ? url : '';
+            imgElement.classList.toggle('hidden', !isValidUrl);
         }
 
         async function saveQuiz() {
             if (!db) { showMessage("データベースに接続されていません。"); return; }
             const quizName = quizNameEdit.value.trim();
-            const jsonText = jsonInput.value.trim();
-            if (!quizName || !jsonText) { showMessage("クイズ名とJSONデータを入力してください。"); return; }
-            let quizData;
+            if (!quizName) { showMessage("クイズ名を入力してください。"); return; }
+
+            let originalQuizData;
             try {
-                quizData = JSON.parse(jsonText);
-                if (Array.isArray(quizData)) { quizData = { questions: quizData }; }
-                if (!quizData.questions || !Array.isArray(quizData.questions)) { throw new Error("`questions`配列が必要です。"); }
-            } catch (error) { showMessage("JSONの形式が正しくありません。"); console.error("JSON parse error:", error); return; }
+                originalQuizData = JSON.parse(jsonInput.value.trim());
+                if (Array.isArray(originalQuizData)) originalQuizData = { questions: originalQuizData };
+            } catch (e) {
+                showMessage("元のJSONデータが正しくありません。"); return;
+            }
 
-            quizData.questions.forEach((question, index) => {
-                question.questionImageUrl = document.getElementById(`image-url-q-${index}`).value.trim();
-                const urlA = document.getElementById(`image-url-a-${index}`).value.trim();
-                const urlB = document.getElementById(`image-url-b-${index}`).value.trim();
-                if (!question.options.A) question.options.A = {};
-                if (!question.options.B) question.options.B = {};
-                question.options.A.imageUrl = urlA;
-                question.options.B.imageUrl = urlB;
-            });
+            const newQuestions = [];
+            const questionCount = originalQuizData.questions.length;
 
+            for (let i = 0; i < questionCount; i++) {
+                const questionText = document.getElementById(`question-text-edit-${i}`).value.trim();
+                const optionAText = document.getElementById(`option-text-a-${i}`).value.trim();
+                const optionBText = document.getElementById(`option-text-b-${i}`).value.trim();
+                const answerRadio = document.querySelector(`input[name="answer-${i}"]:checked`);
+                if (!questionText || !optionAText || !optionBText || !answerRadio) {
+                    showMessage(`問題 ${i + 1} の入力が不完全です。問題文と選択肢テキスト、正解の選択は必須です。`); return;
+                }
+                
+                const originalQuestion = originalQuizData.questions[i] || {};
+                newQuestions.push({
+                    ...originalQuestion, // explanationなどを維持
+                    question: questionText,
+                    questionImageUrl: document.getElementById(`image-url-q-${i}`).value.trim(),
+                    options: {
+                        A: { text: optionAText, imageUrl: document.getElementById(`image-url-a-${i}`).value.trim() },
+                        B: { text: optionBText, imageUrl: document.getElementById(`image-url-b-${i}`).value.trim() }
+                    },
+                    answer: answerRadio.value
+                });
+            }
+
+            const finalQuizData = { questions: newQuestions };
             showLoading(true);
             try {
-                const quizRef = doc(db, `artifacts/default-app-id/public/data/quizzes`, quizName);
-                await setDoc(quizRef, quizData);
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                const quizRef = doc(db, `artifacts/${appId}/public/data/quizzes`, quizName);
+                await setDoc(quizRef, finalQuizData);
                 showMessage("クイズが正常に保存されました！", 3000, 'success');
                 setTimeout(() => showScreen('home'), 1000);
             } catch (error) {
@@ -363,7 +399,8 @@
             if (!quizName) { showMessage("クイズ名を入力してください。"); return; }
             showLoading(true);
             try {
-                const quizRef = doc(db, `artifacts/default-app-id/public/data/quizzes`, quizName);
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                const quizRef = doc(db, `artifacts/${appId}/public/data/quizzes`, quizName);
                 const docSnap = await getDoc(quizRef);
                 if (docSnap.exists()) {
                     const quizData = docSnap.data();
@@ -371,7 +408,7 @@
                     quizNameEdit.value = quizName;
                     jsonInput.value = JSON.stringify(quizData, null, 2);
                     showScreen('edit');
-                    jsonInput.dispatchEvent(new Event('input', { bubbles: true }));
+                    jsonInput.dispatchEvent(new Event('input', { bubbles: true })); // 編集フォームを生成
                 } else { showMessage("指定されたクイズが見つかりませんでした。"); }
             } catch (error) { console.error("Firebaseからの読み込みに失敗しました:", error); showMessage("クイズの読み込みに失敗しました。");
             } finally { showLoading(false); }
@@ -383,7 +420,8 @@
             if (!quizName) { showMessage("クイズ名を入力してください。"); return; }
             showLoading(true);
             try {
-                const quizRef = doc(db, `artifacts/default-app-id/public/data/quizzes`, quizName);
+                const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+                const quizRef = doc(db, `artifacts/${appId}/public/data/quizzes`, quizName);
                 const docSnap = await getDoc(quizRef);
                 if (docSnap.exists()) {
                     currentQuizData = docSnap.data();
@@ -404,26 +442,21 @@
             const question = currentQuizData.questions[index];
             if (!question) return;
 
-            if (question.questionImageUrl) { questionImg.src = question.questionImageUrl; questionImgContainer.classList.remove('hidden'); } 
-            else { questionImgContainer.classList.add('hidden'); }
-            
+            updatePreviewImage(question.questionImageUrl, questionImg);
             questionText.textContent = question.question;
             quizProgress.textContent = `${index + 1} / ${currentQuizData.questions.length}`;
             
             optionAText.textContent = question.options.A.text;
-            if (question.options.A.imageUrl) { optionAImg.src = question.options.A.imageUrl; optionAImg.classList.remove('hidden'); } 
-            else { optionAImg.classList.add('hidden'); }
-
+            updatePreviewImage(question.options.A.imageUrl, optionAImg);
             optionBText.textContent = question.options.B.text;
-            if (question.options.B.imageUrl) { optionBImg.src = question.options.B.imageUrl; optionBImg.classList.remove('hidden'); } 
-            else { optionBImg.classList.add('hidden'); }
+            updatePreviewImage(question.options.B.imageUrl, optionBImg);
 
             feedbackContainer.classList.add('hidden');
             nextQuestionBtn.classList.add('hidden');
             optionABtn.disabled = false;
             optionBBtn.disabled = false;
-            optionABtn.classList.remove('border-green-500', 'border-red-500', 'border-orange-500', 'border-blue-500');
-            optionBBtn.classList.remove('border-green-500', 'border-red-500', 'border-orange-500', 'border-blue-500');
+            optionABtn.classList.remove('border-green-500', 'border-red-500', 'border-gray-400');
+            optionBBtn.classList.remove('border-green-500', 'border-red-500', 'border-gray-400');
         }
         
         function checkAnswer(selectedOption) {
@@ -440,9 +473,9 @@
                 score++;
             } else {
                 feedbackResult.textContent = "ざんねん…";
-                feedbackResult.className = "text-2xl font-bold text-center text-orange-500";
-                selectedBtn.classList.add('border-orange-500');
-                correctBtn.classList.add('border-blue-500');
+                feedbackResult.className = "text-2xl font-bold text-center text-red-500";
+                selectedBtn.classList.add('border-gray-400');
+                correctBtn.classList.add('border-green-500');
             }
             feedbackExplanation.textContent = question.explanation;
             feedbackContainer.classList.remove('hidden');
@@ -472,4 +505,3 @@
     </script>
 </body>
 </html>
-
