@@ -83,12 +83,12 @@
             </div>
 
             <div class="space-y-2">
-                    <label for="json-input" class="block text-sm font-medium text-gray-700">
-                        JSONデータ (ここを元に編集フォームが生成されます)
-                        <a href="https://chatgpt.com/g/g-68e79a810ad48191b8433cf72d5ea89b-2ze-json" target="_blank" rel="noopener noreferrer" class="ml-2 text-sm text-blue-600 underline hover:text-blue-800">
-                            (GPTsでJSONを生成)
-                        </a>
-                    </label>
+                <label for="json-input" class="block text-sm font-medium text-gray-700">
+                    JSONデータ (ここを元に編集フォームが生成されます)
+                    <a href="https://chatgpt.com/g/g-68e79a810ad48191b8433cf72d5ea89b-2ze-json" target="_blank" rel="noopener noreferrer" class="ml-2 text-sm text-blue-600 underline hover:text-blue-800">
+                        (GPTsでJSONを生成)
+                    </a>
+                </label>
                 <textarea id="json-input" rows="8" class="w-full p-3 border border-gray-300 rounded-lg font-mono text-sm" placeholder="ここにGPTsで生成したJSONを貼り付けます"></textarea>
             </div>
             
@@ -118,7 +118,7 @@
         <div id="quiz-screen" class="hidden bg-white p-6 sm:p-8 rounded-xl shadow-lg space-y-4">
             
             <div id="question-img-container" class="hidden my-4">
-                    <img id="question-img" src="" class="w-full h-auto object-contain rounded-lg aspect-video mx-auto">
+                <img id="question-img" src="" class="w-full h-auto object-contain rounded-lg aspect-video mx-auto">
             </div>
 
             <div class="bg-gray-50 p-4 rounded-lg">
@@ -244,7 +244,7 @@
                     if (user) {
                         userId = user.uid;
                     } else {
-                         if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
                             await signInWithCustomToken(auth, __initial_auth_token);
                         } else {
                             await signInAnonymously(auth);
@@ -320,7 +320,11 @@
                 formBlock.innerHTML = `
                     <div class="flex justify-between items-center">
                         <h3 class="font-bold text-gray-800">問題 ${index + 1}</h3>
-                        <button type="button" class="delete-question-btn text-sm text-gray-500 hover:text-red-600 underline" data-index="${index}">この問題を削除</button>
+                        <div class="flex gap-2">
+                            <button type="button" class="move-up-btn text-sm text-gray-500 hover:text-blue-600 underline" data-index="${index}">↑ 上へ</button>
+                            <button type="button" class="move-down-btn text-sm text-gray-500 hover:text-blue-600 underline" data-index="${index}">↓ 下へ</button>
+                            <button type="button" class="delete-question-btn text-sm text-gray-500 hover:text-red-600 underline" data-index="${index}">削除</button>
+                        </div>
                     </div>
                     <div class="space-y-2">
                         <label for="question-text-edit-${index}" class="block text-sm font-medium text-gray-700">問題文</label>
@@ -334,14 +338,18 @@
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div id="option-container-a-${index}" class="space-y-2 p-3 rounded-lg border ${answer === 'A' ? 'bg-green-50 border-green-400' : 'bg-gray-50 border-gray-200'}">
                             <div class="flex items-center gap-x-2"><input id="answer-a-${index}" name="answer-${index}" type="radio" value="A" class="answer-radio h-4 w-4" data-index="${index}" ${answer === 'A' ? 'checked' : ''}><label for="answer-a-${index}">選択肢A (正解にする)</label></div>
-                            <label for="option-text-a-${index}" class="text-sm font-medium">テキスト</label><input type="text" id="option-text-a-${index}" class="w-full p-2 border border-gray-300 rounded-lg" value="${textA}">
-                            <label for="image-url-a-${index}" class="text-sm font-medium">画像URL (任意)</label><input type="url" id="image-url-a-${index}" data-index="${index}" data-type="A" class="image-url-input w-full p-2 border border-gray-300 rounded-lg" placeholder="https://..." value="${imgUrlA}">
+                            <label for="option-text-a-${index}" class="text-sm font-medium">テキスト</label>
+                            <textarea id="option-text-a-${index}" class="w-full p-2 border border-gray-300 rounded-lg" rows="2">${textA}</textarea>
+                            <label for="image-url-a-${index}" class="text-sm font-medium">画像URL (任意)</label>
+                            <input type="url" id="image-url-a-${index}" data-index="${index}" data-type="A" class="image-url-input w-full p-2 border border-gray-300 rounded-lg" placeholder="https://..." value="${imgUrlA}">
                             <img id="preview-a-${index}" src="${imgUrlA}" class="mt-2 w-full h-auto object-contain rounded-lg aspect-[4/3] ${imgUrlA ? '' : 'hidden'}">
                         </div>
                         <div id="option-container-b-${index}" class="space-y-2 p-3 rounded-lg border ${answer === 'B' ? 'bg-green-50 border-green-400' : 'bg-gray-50 border-gray-200'}">
                            <div class="flex items-center gap-x-2"><input id="answer-b-${index}" name="answer-${index}" type="radio" value="B" class="answer-radio h-4 w-4" data-index="${index}" ${answer === 'B' ? 'checked' : ''}><label for="answer-b-${index}">選択肢B (正解にする)</label></div>
-                           <label for="option-text-b-${index}" class="text-sm font-medium">テキスト</label><input type="text" id="option-text-b-${index}" class="w-full p-2 border border-gray-300 rounded-lg" value="${textB}">
-                           <label for="image-url-b-${index}" class="text-sm font-medium">画像URL (任意)</label><input type="url" id="image-url-b-${index}" data-index="${index}" data-type="B" class="image-url-input w-full p-2 border border-gray-300 rounded-lg" placeholder="https://..." value="${imgUrlB}">
+                           <label for="option-text-b-${index}" class="text-sm font-medium">テキスト</label>
+                           <textarea id="option-text-b-${index}" class="w-full p-2 border border-gray-300 rounded-lg" rows="2">${textB}</textarea>
+                           <label for="image-url-b-${index}" class="text-sm font-medium">画像URL (任意)</label>
+                           <input type="url" id="image-url-b-${index}" data-index="${index}" data-type="B" class="image-url-input w-full p-2 border border-gray-300 rounded-lg" placeholder="https://..." value="${imgUrlB}">
                            <img id="preview-b-${index}" src="${imgUrlB}" class="mt-2 w-full h-auto object-contain rounded-lg aspect-[4/3] ${imgUrlB ? '' : 'hidden'}">
                         </div>
                     </div>
@@ -352,13 +360,13 @@
         }
 
         function setupEditFormEventListeners() {
-             document.querySelectorAll('.image-url-input').forEach(input => {
+            document.querySelectorAll('.image-url-input').forEach(input => {
                 input.addEventListener('input', (e) => {
                     const previewImg = document.getElementById(`preview-${e.target.dataset.type.toLowerCase()}-${e.target.dataset.index}`);
                     updatePreviewImage(e.target.value, previewImg);
                 });
             });
-             document.querySelectorAll('.answer-radio').forEach(radio => {
+            document.querySelectorAll('.answer-radio').forEach(radio => {
                 radio.addEventListener('change', (e) => {
                     const index = e.target.dataset.index;
                     const containerA = document.getElementById(`option-container-a-${index}`);
@@ -378,6 +386,34 @@
                     deleteQuestion(index);
                 });
             });
+            // 並べ替え
+            document.querySelectorAll('.move-up-btn').forEach(btn => {
+                btn.addEventListener('click', e => moveQuestion(parseInt(e.target.dataset.index, 10), -1));
+            });
+            document.querySelectorAll('.move-down-btn').forEach(btn => {
+                btn.addEventListener('click', e => moveQuestion(parseInt(e.target.dataset.index, 10), 1));
+            });
+        }
+
+        function moveQuestion(index, direction) {
+            try {
+                let data = JSON.parse(jsonInput.value.trim());
+                if (Array.isArray(data)) data = { questions: data };
+                const qs = buildQuestionsFromForm();
+
+                const target = index + direction;
+                if (target < 0 || target >= qs.length) return;
+
+                const [moved] = qs.splice(index, 1);
+                qs.splice(target, 0, moved);
+
+                data.questions = qs;
+                jsonInput.value = JSON.stringify(data, null, 2);
+                handleJsonInputChange();
+            } catch (e) {
+                showMessage("並べ替え中にエラーが発生しました。");
+                console.error(e);
+            }
         }
         
         function updatePreviewImage(url, imgElement) {
@@ -455,9 +491,9 @@
             const questions = [];
             const formBlocks = document.querySelectorAll('.question-form-block');
             formBlocks.forEach((_, i) => {
-                const questionText = document.getElementById(`question-text-edit-${i}`)?.value.trim() || "";
-                const optionAText = document.getElementById(`option-text-a-${i}`)?.value.trim() || "";
-                const optionBText = document.getElementById(`option-text-b-${i}`)?.value.trim() || "";
+                const questionTextVal = document.getElementById(`question-text-edit-${i}`)?.value ?? "";
+                const optionATextVal = document.getElementById(`option-text-a-${i}`)?.value ?? "";
+                const optionBTextVal = document.getElementById(`option-text-b-${i}`)?.value ?? "";
                 const answerRadio = document.querySelector(`input[name="answer-${i}"]:checked`);
                 
                 let originalQuestion = {};
@@ -472,11 +508,11 @@
 
                 questions.push({
                     ...originalQuestion,
-                    question: questionText,
+                    question: questionTextVal,
                     questionImageUrl: document.getElementById(`image-url-q-${i}`)?.value.trim() || "",
                     options: {
-                        A: { text: optionAText, imageUrl: document.getElementById(`image-url-a-${i}`)?.value.trim() || "" },
-                        B: { text: optionBText, imageUrl: document.getElementById(`image-url-b-${i}`)?.value.trim() || "" }
+                        A: { text: optionATextVal, imageUrl: document.getElementById(`image-url-a-${i}`)?.value.trim() || "" },
+                        B: { text: optionBTextVal, imageUrl: document.getElementById(`image-url-b-${i}`)?.value.trim() || "" }
                     },
                     answer: answerRadio?.value || "A"
                 });
@@ -571,6 +607,11 @@
             optionsContainer.classList.remove('hidden'); 
         }
         
+        // --- 改行を反映して表示 ---
+        function nl2br(s) {
+            return (s ?? "").toString().replace(/\n/g, "<br>");
+        }
+
         function displayQuestion(index) {
             if (!currentQuizData || !currentQuizData.questions) return;
             const question = currentQuizData.questions[index];
@@ -586,10 +627,11 @@
                 updatePreviewImage('', questionImg);
             }
 
-            questionText.textContent = question.question;
+            // ✅ 改行反映
+            questionText.innerHTML = nl2br(question.question);
 
-            // 選択肢A/B
-            optionAText.textContent = question.options.A.text;
+            // 選択肢A/B（改行反映）
+            optionAText.innerHTML = nl2br(question.options.A.text);
             if (updatePreviewImage(question.options.A.imageUrl, optionAImg)) {
                 optionABtn.classList.add('min-h-[10rem]');
                 optionABtn.classList.remove('py-6');
@@ -598,7 +640,7 @@
                 optionABtn.classList.add('py-6');
             }
 
-            optionBText.textContent = question.options.B.text;
+            optionBText.innerHTML = nl2br(question.options.B.text);
             if (updatePreviewImage(question.options.B.imageUrl, optionBImg)) {
                 optionBBtn.classList.add('min-h-[10rem]');
                 optionBBtn.classList.remove('py-6');
@@ -622,20 +664,19 @@
             optionBBtn.disabled = true;
             const question = currentQuizData.questions[currentQuestionIndex];
             const correctOption = question.answer;
-            const selectedBtn = selectedOption === 'A' ? optionABtn : optionBBtn;
-            const correctBtn = correctOption === 'A' ? optionABtn : optionBBtn;
+
             if (selectedOption === correctOption) {
                 feedbackResult.textContent = "正解！";
                 feedbackResult.className = "text-2xl font-bold text-green-500";
-                selectedBtn.classList.add('border-green-500');
                 score++;
             } else {
                 feedbackResult.textContent = "ざんねん…";
                 feedbackResult.className = "text-2xl font-bold text-red-500";
-                selectedBtn.classList.add('border-gray-400');
-                correctBtn.classList.add('border-green-500');
             }
-            feedbackExplanation.textContent = question.explanation;
+
+            // ✅ 解説も改行反映
+            feedbackExplanation.innerHTML = nl2br(question.explanation || "");
+
             feedbackContainer.classList.remove('hidden');
             nextQuestionBtn.classList.remove('hidden');
             quizBackToHomeBtn.classList.remove('hidden'); // 「終了する」ボタンを表示
@@ -667,6 +708,3 @@
     </script>
 </body>
 </html>
-
-
-
