@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>画像付き2択クイズ (ローカル＆データ移動版)</title>
+  <title>画像付き2択クイズ (ローカル保存版)</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
@@ -13,155 +13,143 @@
     :focus-visible { outline: 2px solid #3b82f6; outline-offset: 2px; }
     .loader { border: 4px solid #f3f4f6; border-top: 4px solid #3b82f6; border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; }
     @keyframes spin { 0% { transform: rotate(0deg);} 100% { transform: rotate(360deg);} }
-    .transfer-area { background-color: #f0f9ff; border: 2px dashed #6366f1; }
   </style>
 </head>
 <body class="bg-gray-100 text-gray-800 flex items-center justify-center min-h-screen p-4">
 
   <div class="w-full max-w-2xl mx-auto">
-    <!-- ===== ホーム画面 ===== -->
     <div id="home-screen" class="bg-white p-6 sm:p-8 rounded-xl shadow-lg space-y-6">
       <h1 class="text-3xl font-bold text-center text-gray-900">画像付き2択クイズ</h1>
-      <p class="text-center text-gray-500 text-sm">PCで作ってJSONをコピーし、iPadで遊べます。</p>
+      <p class="text-center text-gray-500">PCで作ったJSONを貼り付けて遊べます。<br>データはブラウザ内に保存されます。</p>
 
-      <!-- 新規作成 -->
       <div>
-        <button id="create-new-quiz-btn" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg transition duration-300 text-lg shadow">新しいクイズを作成する</button>
+        <button id="create-new-quiz-btn" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg transition duration-300 text-lg">新しいクイズを作成する</button>
       </div>
 
       <div class="relative">
         <div class="absolute inset-0 flex items-center"><div class="w-full border-t border-gray-300"></div></div>
-        <div class="relative flex justify-center text-sm"><span class="px-2 bg-white text-gray-500">保存済み / インポート</span></div>
+        <div class="relative flex justify-center text-sm"><span class="px-2 bg-white text-gray-500">または</span></div>
       </div>
 
-      <!-- ローカル保存リスト -->
-      <div class="bg-gray-50 p-4 rounded-lg">
-        <label class="block text-sm font-bold text-gray-700 mb-2">ブラウザに保存されたクイズ</label>
-        <select id="saved-quiz-select" class="w-full p-2 border border-gray-300 rounded-lg mb-2 bg-white">
-          <option value="">選択してください...</option>
+      <div class="space-y-4">
+        <label for="quiz-name-input-home" class="block text-sm font-medium text-gray-700">保存済みクイズを読み込む</label>
+        <select id="quiz-list-select" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 bg-white">
+          <option value="">保存されたクイズを選択...</option>
         </select>
-        <div class="flex gap-2">
-          <button id="load-local-edit-btn" class="flex-1 bg-yellow-100 text-yellow-800 font-bold py-2 rounded hover:bg-yellow-200 transition">編集</button>
-          <button id="load-local-play-btn" class="flex-1 bg-green-100 text-green-800 font-bold py-2 rounded hover:bg-green-200 transition">プレイ</button>
-          <button id="delete-local-btn" class="px-3 bg-red-100 text-red-800 font-bold py-2 rounded hover:bg-red-200 transition">削除</button>
+        
+        <div class="flex gap-4">
+          <button id="edit-quiz-btn" class="w-1/2 bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-3 px-4 rounded-lg transition duration-300 text-lg">編集 / データ貼付</button>
+          <button id="start-quiz-btn" class="w-1/2 bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg transition duration-300 text-lg">クイズを開始</button>
         </div>
-      </div>
-
-      <!-- JSONインポート（iPad用） -->
-      <div class="transfer-area p-4 rounded-xl">
-        <h2 class="text-md font-bold text-indigo-700 mb-2 flex items-center gap-2">
-          <span class="bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-full">iPadで遊ぶ場合</span>
-          データの読み込み
-        </h2>
-        <p class="text-xs text-gray-600 mb-2">PCから送ったJSONコードをここに貼り付けてください。</p>
-        <textarea id="import-json-area" rows="3" class="w-full p-2 border border-indigo-200 rounded text-xs font-mono mb-2" placeholder='{"questions": [...]}'></textarea>
-        <div class="flex gap-2">
-          <button id="import-play-btn" class="flex-1 bg-indigo-500 text-white font-bold py-2 rounded hover:bg-indigo-600 transition shadow">読み込んで開始</button>
+        
+        <div class="text-right">
+           <button id="delete-quiz-btn" class="text-sm text-red-500 underline hover:text-red-700">選択したクイズを削除</button>
         </div>
       </div>
     </div>
 
-    <!-- ===== 編集画面 ===== -->
     <div id="edit-screen" class="hidden bg-white p-6 sm:p-8 rounded-xl shadow-lg space-y-6">
-      <div class="flex justify-between items-center">
-        <h2 class="text-2xl font-bold text-gray-900">作成・編集</h2>
-        <button id="back-to-home-btn" class="text-sm text-gray-500 hover:text-gray-700 underline">ホームに戻る</button>
-      </div>
+      <h2 class="text-2xl font-bold text-gray-900">クイズの編集・データ取込</h2>
 
       <div class="space-y-2">
-        <label for="quiz-name-edit" class="block text-sm font-medium text-gray-700">クイズ名 (保存用)</label>
+        <label for="quiz-name-edit" class="block text-sm font-medium text-gray-700">クイズ名 (保存名)</label>
         <input id="quiz-name-edit" type="text" class="w-full p-3 border border-gray-300 rounded-lg" placeholder="例: 動物クイズ"/>
       </div>
 
-      <!-- JSONエクスポートエリア -->
-      <div class="bg-indigo-50 p-4 rounded-lg border border-indigo-100">
-        <label class="block text-sm font-bold text-indigo-800 mb-1">データ書き出し (JSON)</label>
-        <p class="text-xs text-indigo-600 mb-2">このコードをコピーしてiPadに送ると、iPadで遊べます。</p>
-        <div class="flex gap-2">
-          <button id="copy-json-btn" class="bg-white border border-indigo-300 text-indigo-600 font-bold py-2 px-4 rounded hover:bg-indigo-50 transition text-sm flex-1">
-            クリップボードにコピー
-          </button>
-        </div>
-        <textarea id="json-input" rows="4" class="w-full p-2 mt-2 border border-gray-300 rounded text-xs font-mono" placeholder="ここにJSONが表示されます"></textarea>
+      <div class="bg-blue-50 p-4 rounded-lg border border-blue-200 text-sm text-blue-800">
+        <strong>PCからiPadへデータを移す方法:</strong><br>
+        1. PCでこのエリアのJSONテキストをすべてコピーします。<br>
+        2. iPadにメールやAirDropでテキストを送ります。<br>
+        3. iPadでこのアプリを開き、ここに貼り付けて「保存」を押します。
+      </div>
+
+      <div class="space-y-2">
+        <label for="json-input" class="block text-sm font-medium text-gray-700">
+          JSONデータ (編集・コピペ用)
+          <a href="https://chatgpt.com/g/g-68e79a810ad48191b8433cf72d5ea89b-2ze-json" target="_blank" rel="noopener noreferrer" class="ml-2 text-sm text-blue-600 underline hover:text-blue-800">(GPTsでJSONを生成)</a>
+        </label>
+        <textarea id="json-input" rows="6" class="w-full p-3 border border-gray-300 rounded-lg font-mono text-sm" placeholder="ここにJSONを貼り付けます"></textarea>
       </div>
 
       <div id="edit-forms-container" class="space-y-6 border-t border-gray-200 pt-6">
-        <p class="text-center text-gray-500">問題を追加してください。</p>
+        <p class="text-center text-gray-500">JSONを貼り付けると、ここに編集フォームが表示されます。</p>
       </div>
 
       <div class="border-t border-gray-200 pt-4">
-        <button id="add-question-btn" type="button" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-bold py-3 px-4 rounded-lg transition duration-300 border border-gray-300">+ 問題を追加する</button>
+        <button id="add-question-btn" type="button" class="w-full bg-green-100 hover:bg-green-200 text-green-800 font-bold py-3 px-4 rounded-lg transition duration-300">問題を追加する</button>
       </div>
 
-      <div class="pt-4">
-        <button id="save-local-btn" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-4 rounded-lg transition duration-300 shadow-lg text-lg">ブラウザに保存する</button>
+      <div class="flex gap-4">
+        <button id="back-to-home-btn" class="w-1/3 bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-4 rounded-lg transition duration-300">戻る</button>
+        <button id="save-quiz-btn" class="w-2/3 bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-4 rounded-lg transition duration-300">この内容で保存</button>
       </div>
     </div>
 
-    <!-- ===== 実行画面 ===== -->
     <div id="quiz-screen" class="hidden bg-white p-6 sm:p-8 rounded-xl shadow-lg space-y-4">
       <div id="question-img-container" class="hidden my-4">
-        <img id="question-img" src="" class="w-full h-auto object-contain rounded-lg aspect-video mx-auto bg-black/5" alt="">
+        <img id="question-img" src="" class="w-full h-auto object-contain rounded-lg aspect-video mx-auto" alt="">
       </div>
 
       <div class="bg-gray-50 p-4 rounded-lg">
-        <p id="question-text" class="text-xl font-semibold text-center min-h-[3em] flex items-center justify-center">問題文</p>
+        <p id="question-text" class="text-xl font-semibold text-center min-h-[3em] flex items-center justify-center">問題文がここに表示されます。</p>
       </div>
 
       <div id="options-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <button id="option-a-btn" data-option="A" class="option-btn flex flex-col items-center justify-center p-2 border-4 border-transparent rounded-xl hover:border-blue-500 focus:border-blue-500 transition-all duration-300 space-y-2 bg-gray-50">
-          <img id="option-a-img" src="" class="w-full h-auto object-contain rounded-lg aspect-[4/3] hidden bg-white" alt="">
+        <button id="option-a-btn" data-option="A" class="option-btn flex flex-col items-center justify-center p-2 border-4 border-transparent rounded-xl hover:border-blue-500 focus:border-blue-500 transition-all duration-300 space-y-2">
+          <img id="option-a-img" src="" class="w-full h-auto object-contain rounded-lg aspect-[4/3] hidden" alt="">
           <p id="option-a-text" class="font-semibold text-center px-2">選択肢A</p>
         </button>
-        <button id="option-b-btn" data-option="B" class="option-btn flex flex-col items-center justify-center p-2 border-4 border-transparent rounded-xl hover:border-blue-500 focus:border-blue-500 transition-all duration-300 space-y-2 bg-gray-50">
-          <img id="option-b-img" src="" class="w-full h-auto object-contain rounded-lg aspect-[4/3] hidden bg-white" alt="">
+        <button id="option-b-btn" data-option="B" class="option-btn flex flex-col items-center justify-center p-2 border-4 border-transparent rounded-xl hover:border-blue-500 focus:border-blue-500 transition-all duration-300 space-y-2">
+          <img id="option-b-img" src="" class="w-full h-auto object-contain rounded-lg aspect-[4/3] hidden" alt="">
           <p id="option-b-text" class="font-semibold text-center px-2">選択肢B</p>
         </button>
       </div>
 
-      <div id="feedback-container" class="hidden p-4 rounded-lg space-y-4 bg-gray-50 border border-gray-200">
+      <div id="feedback-container" class="hidden p-4 rounded-lg space-y-4">
         <div class="text-center">
           <h3 id="feedback-result" class="text-2xl font-bold"></h3>
-          <p id="feedback-explanation" class="text-gray-700 mt-2 text-lg"></p>
+          <p id="feedback-explanation" class="text-gray-700 mt-1"></p>
         </div>
         <div class="flex justify-between items-center pt-2">
           <button id="quiz-back-to-home-btn" class="text-sm text-gray-500 hover:text-gray-700 transition duration-300 whitespace-nowrap">終了する</button>
-          <button id="next-question-btn" class="text-lg font-bold text-white bg-green-500 hover:bg-green-600 px-6 py-2 rounded-lg transition duration-300 shadow">次へ</button>
+          <button id="next-question-btn" class="text-lg font-bold text-green-600 hover:text-green-800 transition duration-300 whitespace-nowrap">次へ</button>
         </div>
       </div>
 
-      <div class="h-10"></div>
+      <div class="h-14"></div>
     </div>
 
-    <!-- ===== メッセージ ===== -->
-    <div id="message-box" class="hidden fixed bottom-5 right-5 bg-red-500 text-white py-3 px-5 rounded-lg shadow-xl z-50 transition-opacity duration-300">
+    <div id="loading-indicator" class="hidden fixed inset-0 bg-gray-900 bg-opacity-50 flex items-center justify-center z-50"><div class="loader"></div></div>
+
+    <div id="message-box" class="hidden fixed bottom-5 right-5 bg-red-500 text-white py-3 px-5 rounded-lg shadow-xl z-50">
       <p id="message-text"></p>
     </div>
   </div>
 
   <script>
-    // --- 定数・状態 ---
-    const STORAGE_KEY_PREFIX = "quiz_maker_data_";
-    let currentQuizData = null, currentQuestionIndex = 0, score = 0;
-
     // --- DOM ---
     const screens = { home: document.getElementById('home-screen'), edit: document.getElementById('edit-screen'), quiz: document.getElementById('quiz-screen') };
+    const loadingIndicator = document.getElementById('loading-indicator');
     const messageBox = document.getElementById('message-box');
     const messageText = document.getElementById('message-text');
 
-    // Home
-    const savedQuizSelect = document.getElementById('saved-quiz-select');
-    const importJsonArea = document.getElementById('import-json-area');
+    const createNewQuizBtn = document.getElementById('create-new-quiz-btn');
+    const quizListSelect = document.getElementById('quiz-list-select');
+    const startQuizBtn = document.getElementById('start-quiz-btn');
+    const editQuizBtn = document.getElementById('edit-quiz-btn');
+    const deleteQuizBtn = document.getElementById('delete-quiz-btn');
     
-    // Edit
     const quizNameEdit = document.getElementById('quiz-name-edit');
     const jsonInput = document.getElementById('json-input');
     const editFormsContainer = document.getElementById('edit-forms-container');
+    const addQuestionBtn = document.getElementById('add-question-btn');
+    const saveQuizBtn = document.getElementById('save-quiz-btn');
+    const backToHomeBtn = document.getElementById('back-to-home-btn');
 
-    // Quiz
     const questionText = document.getElementById('question-text');
     const questionImgContainer = document.getElementById('question-img-container');
     const questionImg = document.getElementById('question-img');
+    const optionsContainer = document.getElementById('options-container');
     const optionABtn = document.getElementById('option-a-btn');
     const optionBBtn = document.getElementById('option-b-btn');
     const optionAImg = document.getElementById('option-a-img');
@@ -172,374 +160,503 @@
     const feedbackResult = document.getElementById('feedback-result');
     const feedbackExplanation = document.getElementById('feedback-explanation');
     const nextQuestionBtn = document.getElementById('next-question-btn');
+    const quizBackToHomeBtn = document.getElementById('quiz-back-to-home-btn');
 
-    // --- 共通関数 ---
-    function showScreen(screenName){ Object.values(screens).forEach(s => s.classList.add('hidden')); screens[screenName]?.classList.remove('hidden'); }
-    
+    // --- 状態 ---
+    const STORAGE_KEY = 'my_quiz_app_v1'; // LocalStorageのキー
+    let currentQuizData = null, currentQuestionIndex = 0, score = 0;
+    let loadedQuizName = null;
+
+    // --- 共通UI ---
+    function showScreen(screenName){ Object.values(screens).forEach(s => s.classList.add('hidden')); screens[screenName]?.classList.remove('hidden'); updateQuizListUI(); }
+    function showLoading(show){ loadingIndicator.classList.toggle('hidden', !show); }
     function showMessage(message, duration=3000, type='error'){
-      messageBox.classList.remove('bg-red-500','bg-green-500','bg-blue-500');
-      messageBox.classList.add(type==='success'?'bg-green-500':(type==='info'?'bg-blue-500':'bg-red-500'));
+      messageBox.classList.remove('bg-red-500','bg-green-500');
+      messageBox.classList.add(type==='success'?'bg-green-500':'bg-red-500');
       messageText.textContent = message;
       messageBox.classList.remove('hidden');
       setTimeout(()=>messageBox.classList.add('hidden'), duration);
     }
 
-    // --- Google Drive URL処理 (そのまま維持) ---
+    // --- LocalStorage 管理 ---
+    function getAllQuizzes() {
+        try {
+            const raw = localStorage.getItem(STORAGE_KEY);
+            return raw ? JSON.parse(raw) : {};
+        } catch(e) { console.error(e); return {}; }
+    }
+
+    function saveQuizToStorage(name, data) {
+        const db = getAllQuizzes();
+        db[name] = data;
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+        updateQuizListUI();
+    }
+    
+    function deleteQuizFromStorage(name) {
+        const db = getAllQuizzes();
+        delete db[name];
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(db));
+        updateQuizListUI();
+    }
+
+    function getQuizFromStorage(name) {
+        const db = getAllQuizzes();
+        return db[name] || null;
+    }
+
+    function updateQuizListUI() {
+        const db = getAllQuizzes();
+        const names = Object.keys(db);
+        const currentVal = quizListSelect.value;
+        
+        quizListSelect.innerHTML = '<option value="">保存されたクイズを選択...</option>';
+        if (names.length === 0) {
+            const op = document.createElement('option');
+            op.text = "（保存されたクイズはありません）";
+            op.disabled = true;
+            quizListSelect.appendChild(op);
+        } else {
+            names.forEach(n => {
+                const op = document.createElement('option');
+                op.value = n;
+                op.textContent = n;
+                quizListSelect.appendChild(op);
+            });
+            if (names.includes(currentVal)) quizListSelect.value = currentVal;
+        }
+    }
+
+    // === Drive等リンク正規化 (そのまま維持) ===
     function normalizeImageUrl(raw){
       if(!raw) return { url:"", ok:false, reason:"empty" };
       const url = raw.trim();
       if(/^https?:\/\/photos\.google\.com\/photo\//.test(url)) return { url:"", ok:false, reason:"google_photos_page" };
       if(/^https?:\/\/photos\.app\.goo\.gl\//.test(url)) return { url:"", ok:false, reason:"google_photos_share_link" };
-      let m = url.match(/https?:\/\/drive\.google\.com\/file\/d\/([^\/]+)\//);
+      let m = url.match(/https?:\/\/drive\.google\.com\/file\/d\/([^/]+)\//);
       if(m && m[1]) return { url:`https://drive.google.com/uc?export=view&id=${m[1]}`, ok:true };
       m = url.match(/https?:\/\/drive\.google\.com\/open\?id=([^&]+)/);
       if(m && m[1]) return { url:`https://drive.google.com/uc?export=view&id=${m[1]}`, ok:true };
       m = url.match(/https?:\/\/drive\.google\.com\/uc\?(?:[^#]*&)?id=([^&]+)/);
       if(m && m[1]) return { url:`https://drive.google.com/uc?export=view&id=${m[1]}`, ok:true };
       if(/^https?:\/\/lh3\.googleusercontent\.com\/[A-Za-z0-9_\-]/.test(url)){
-        if(!/[?=]/.test(url)) return { url: url + "=w1600", ok:true }; return { url, ok:true };
+        if(!/[?=]/.test(url)) return { url: url + "=w1600", ok:true };
+        return { url, ok:true };
+      }
+      if(/^https?:\/\/photos\.fife\.usercontent\.google\.com\//.test(url)){
+        const replaced = url.replace(/\/s\d+(-no)?/i, "/s1600-no");
+        return { url: replaced, ok:true, warning:"fife_unstable" };
       }
       if(/^https?:\/\//.test(url)) return { url, ok:true };
       return { url:"", ok:false, reason:"invalid" };
     }
 
     function updatePreviewImage(rawUrl, imgElement){
-      const { url, ok, reason } = normalizeImageUrl(rawUrl || "");
+      if(/\.(heic|heif)(\?.*)?$/i.test(rawUrl || "")){
+        showMessage("この画像はHEIC形式です。JPEG/PNGに変換してからご利用ください。");
+      }
+      const { url, ok, reason, warning } = normalizeImageUrl(rawUrl || "");
       imgElement.onerror = null;
       if(!ok){
-        imgElement.src = ""; imgElement.classList.add("hidden");
+        imgElement.src = "";
+        imgElement.classList.add("hidden");
         return false;
       }
       imgElement.classList.remove("hidden");
-      // Fallback
       let triedFallback = false;
       imgElement.onerror = () => {
         if(!triedFallback){
           triedFallback = true;
           const m = url.match(/\/uc\?export=view&id=([^&]+)/);
-          if(m && m[1]){ imgElement.src = `https://drive.google.com/thumbnail?id=${m[1]}&sz=w1600`; return; }
+          if(m && m[1]){
+            imgElement.src = `https://drive.google.com/thumbnail?id=${m[1]}&sz=w1600`;
+            return;
+          }
         }
         imgElement.classList.add("hidden");
       };
       imgElement.src = url;
+      if(warning === "fife_unstable") console.warn("Fife link detected");
       return true;
     }
 
-    // --- 編集画面ロジック ---
+    // --- 画面イベント ---
+    function setupEventListeners(){
+      document.getElementById('create-new-quiz-btn').addEventListener('click', ()=>{
+        loadedQuizName = null;
+        resetEditScreen();
+        showScreen('edit');
+      });
+      startQuizBtn.addEventListener('click', loadAndStartQuiz);
+      editQuizBtn.addEventListener('click', loadQuizForEditing);
+      deleteQuizBtn.addEventListener('click', deleteSelectedQuiz);
+      saveQuizBtn.addEventListener('click', saveQuiz);
+      backToHomeBtn.addEventListener('click', ()=>showScreen('home'));
+      document.getElementById('quiz-back-to-home-btn').addEventListener('click', ()=>{ showScreen('home'); resetQuizState(); });
+      jsonInput.addEventListener('input', handleJsonInputChange);
+      addQuestionBtn.addEventListener('click', addQuestion);
+      optionABtn.addEventListener('click', ()=>checkAnswer('A'));
+      optionBBtn.addEventListener('click', ()=>checkAnswer('B'));
+      nextQuestionBtn.addEventListener('click', displayNextQuestion);
+    }
+
     function resetEditScreen(){
       quizNameEdit.value = '';
       jsonInput.value = '';
-      editFormsContainer.innerHTML = '<p class="text-center text-gray-500">問題を追加してください。</p>';
+      editFormsContainer.innerHTML = '<p class="text-center text-gray-500">JSONを貼り付けると、ここに編集フォームが表示されます。</p>';
     }
 
-    function syncJsonFromForm(){
-      const questions = buildQuestionsFromForm();
-      const data = { questions: questions, updatedAt: new Date().toISOString() };
-      jsonInput.value = JSON.stringify(data, null, 2);
+    function handleJsonInputChange(){
+      const jsonText = jsonInput.value.trim();
+      if(!jsonText){
+        editFormsContainer.innerHTML = '<p class="text-center text-gray-500">JSONを貼り付けると、ここに編集フォームが表示されます。</p>';
+        return;
+      }
+      try{
+        let data = JSON.parse(jsonText);
+        if(Array.isArray(data)) data = { questions: data };
+        if(data && Array.isArray(data.questions)) renderEditForms(data.questions);
+        else editFormsContainer.innerHTML = '<p class="text-center text-red-500">JSONに`questions`配列が含まれていません。</p>';
+      }catch(e){
+        editFormsContainer.innerHTML = '<p class="text-center text-yellow-600">正しいJSON形式で入力してください...</p>';
+      }
+    }
+
+    function renderEditForms(questions){
+      editFormsContainer.innerHTML = '';
+      questions.forEach((question, index) => {
+        const qText = question.question || "";
+        const qImgUrl = question.questionImageUrl || "";
+        const textA = question.options?.A?.text || "";
+        const imgUrlA = question.options?.A?.imageUrl || "";
+        const textB = question.options?.B?.text || "";
+        const imgUrlB = question.options?.B?.imageUrl || "";
+        const answer = question.answer || "A";
+
+        const formBlock = document.createElement('div');
+        formBlock.className = 'space-y-4 p-4 border border-gray-200 rounded-lg bg-white question-form-block';
+        formBlock.innerHTML = `
+          <div class="flex justify-between items-center">
+            <h3 class="font-bold text-gray-800">問題 ${index + 1}</h3>
+            <div class="flex gap-2">
+              <button type="button" class="move-up-btn text-sm text-gray-500 hover:text-blue-600 underline" data-index="${index}">↑ 上へ</button>
+              <button type="button" class="move-down-btn text-sm text-gray-500 hover:text-blue-600 underline" data-index="${index}">↓ 下へ</button>
+              <button type="button" class="delete-question-btn text-sm text-gray-500 hover:text-red-600 underline" data-index="${index}">削除</button>
+            </div>
+          </div>
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">問題文</label>
+            <textarea id="question-text-edit-${index}" class="w-full p-2 border border-gray-300 rounded-lg" rows="2">${qText}</textarea>
+          </div>
+          <div class="space-y-2">
+            <label class="block text-sm font-medium text-gray-700">問題文の画像URL (任意)</label>
+            <input type="url" id="image-url-q-${index}" data-index="${index}" data-type="Q" class="image-url-input w-full p-2 border border-gray-300 rounded-lg" placeholder="https://..." value="${qImgUrl}">
+            <img id="preview-q-${index}" src="" class="mt-2 w-full h-auto object-contain rounded-lg aspect-video hidden" alt="">
+          </div>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div id="option-container-a-${index}" class="space-y-2 p-3 rounded-lg border ${answer==='A'?'bg-green-50 border-green-400':'bg-gray-50 border-gray-200'}">
+              <div class="flex items-center gap-x-2">
+                <input id="answer-a-${index}" name="answer-${index}" type="radio" value="A" class="answer-radio h-4 w-4" data-index="${index}" ${answer==='A'?'checked':''}>
+                <label for="answer-a-${index}">選択肢A (正解にする)</label>
+              </div>
+              <textarea id="option-text-a-${index}" class="w-full p-2 border border-gray-300 rounded-lg" rows="2" placeholder="テキスト">${textA}</textarea>
+              <input type="url" id="image-url-a-${index}" data-index="${index}" data-type="A" class="image-url-input w-full p-2 border border-gray-300 rounded-lg" placeholder="画像URL" value="${imgUrlA}">
+              <img id="preview-a-${index}" src="" class="mt-2 w-full h-auto object-contain rounded-lg aspect-[4/3] hidden" alt="">
+            </div>
+            <div id="option-container-b-${index}" class="space-y-2 p-3 rounded-lg border ${answer==='B'?'bg-green-50 border-green-400':'bg-gray-50 border-gray-200'}">
+              <div class="flex items-center gap-x-2">
+                <input id="answer-b-${index}" name="answer-${index}" type="radio" value="B" class="answer-radio h-4 w-4" data-index="${index}" ${answer==='B'?'checked':''}>
+                <label for="answer-b-${index}">選択肢B (正解にする)</label>
+              </div>
+              <textarea id="option-text-b-${index}" class="w-full p-2 border border-gray-300 rounded-lg" rows="2" placeholder="テキスト">${textB}</textarea>
+              <input type="url" id="image-url-b-${index}" data-index="${index}" data-type="B" class="image-url-input w-full p-2 border border-gray-300 rounded-lg" placeholder="画像URL" value="${imgUrlB}">
+              <img id="preview-b-${index}" src="" class="mt-2 w-full h-auto object-contain rounded-lg aspect-[4/3] hidden" alt="">
+            </div>
+          </div>
+        `;
+        editFormsContainer.appendChild(formBlock);
+
+        const qInput = document.getElementById(`image-url-q-${index}`);
+        const aInput = document.getElementById(`image-url-a-${index}`);
+        const bInput = document.getElementById(`image-url-b-${index}`);
+        const qPrev  = document.getElementById(`preview-q-${index}`);
+        const aPrev  = document.getElementById(`preview-a-${index}`);
+        const bPrev  = document.getElementById(`preview-b-${index}`);
+        if(qInput && qPrev) updatePreviewImage(qInput.value, qPrev);
+        if(aInput && aPrev) updatePreviewImage(aInput.value, aPrev);
+        if(bInput && bPrev) updatePreviewImage(bInput.value, bPrev);
+      });
+      setupEditFormEventListeners();
+    }
+
+    function setupEditFormEventListeners(){
+      document.querySelectorAll('.image-url-input').forEach(input=>{
+        input.addEventListener('input', (e)=>{
+          const previewImg = document.getElementById(`preview-${e.target.dataset.type.toLowerCase()}-${e.target.dataset.index}`);
+          updatePreviewImage(e.target.value, previewImg);
+        });
+      });
+      document.querySelectorAll('.answer-radio').forEach(radio=>{
+        radio.addEventListener('change', (e)=>{
+          const index = e.target.dataset.index;
+          const containerA = document.getElementById(`option-container-a-${index}`);
+          const containerB = document.getElementById(`option-container-b-${index}`);
+          if(e.target.value === 'A' && e.target.checked){
+            containerA.classList.replace('bg-gray-50','bg-green-50'); containerA.classList.replace('border-gray-200','border-green-400');
+            containerB.classList.replace('bg-green-50','bg-gray-50'); containerB.classList.replace('border-green-400','border-gray-200');
+          }else{
+            containerB.classList.replace('bg-gray-50','bg-green-50'); containerB.classList.replace('border-gray-200','border-green-400');
+            containerA.classList.replace('bg-green-50','bg-gray-50'); containerA.classList.replace('border-green-400','border-gray-200');
+          }
+        });
+      });
+      document.querySelectorAll('.delete-question-btn').forEach(btn=>{
+        btn.addEventListener('click', (e)=>{ deleteQuestion(parseInt(e.target.dataset.index,10)); });
+      });
+      document.querySelectorAll('.move-up-btn').forEach(btn=>{
+        btn.addEventListener('click', e=>moveQuestion(parseInt(e.target.dataset.index,10), -1));
+      });
+      document.querySelectorAll('.move-down-btn').forEach(btn=>{
+        btn.addEventListener('click', e=>moveQuestion(parseInt(e.target.dataset.index,10), +1));
+      });
+    }
+
+    function moveQuestion(index, direction){
+      try{
+        let data = JSON.parse(jsonInput.value.trim());
+        if(Array.isArray(data)) data = { questions: data };
+        const qs = buildQuestionsFromForm();
+        const target = index + direction;
+        if(target < 0 || target >= qs.length) return;
+        const [moved] = qs.splice(index, 1);
+        qs.splice(target, 0, moved);
+        data.questions = qs;
+        jsonInput.value = JSON.stringify(data, null, 2);
+        handleJsonInputChange();
+      }catch(e){ showMessage("並べ替え中にエラーが発生しました。"); }
+    }
+
+    function deleteQuestion(indexToDelete){
+      try{
+        let data;
+        const jsonText = jsonInput.value.trim();
+        if(jsonText){
+          data = JSON.parse(jsonText);
+          if(Array.isArray(data)) data = { questions: data };
+        }else data = { questions: [] };
+        if(!data.questions) return;
+        const updated = buildQuestionsFromForm();
+        data.questions = updated;
+        data.questions.splice(indexToDelete, 1);
+        jsonInput.value = JSON.stringify(data, null, 2);
+        handleJsonInputChange();
+      }catch(e){ showMessage("JSONエラーが発生しました。"); }
     }
 
     function addQuestion(){
-      const questions = buildQuestionsFromForm();
-      questions.push({
-        question: "新しい問題", explanation: "", answer: "A",
-        options: { A: { text: "選択肢A", imageUrl: "" }, B: { text: "選択肢B", imageUrl: "" } },
-        questionImageUrl: ""
-      });
-      renderEditForms(questions);
-      syncJsonFromForm();
-      setTimeout(()=>editFormsContainer.lastChild?.scrollIntoView({behavior:'smooth'}), 100);
-    }
-
-    function deleteQuestion(index){
-      const questions = buildQuestionsFromForm();
-      questions.splice(index, 1);
-      renderEditForms(questions);
-      syncJsonFromForm();
-    }
-
-    function moveQuestion(index, dir){
-      const qs = buildQuestionsFromForm();
-      const target = index + dir;
-      if(target < 0 || target >= qs.length) return;
-      const [moved] = qs.splice(index, 1);
-      qs.splice(target, 0, moved);
-      renderEditForms(qs);
-      syncJsonFromForm();
+      try{
+        let data;
+        const jsonText = jsonInput.value.trim();
+        if(jsonText){
+          data = JSON.parse(jsonText);
+          if(Array.isArray(data)) data = { questions: data };
+        }else data = { questions: [] };
+        if(!data.questions) data.questions = [];
+        const existing = buildQuestionsFromForm();
+        data.questions = existing;
+        data.questions.push({
+          question: "新しい問題",
+          explanation: "",
+          answer: "A",
+          options: { A: { text: "A", imageUrl: "" }, B: { text: "B", imageUrl: "" } },
+          questionImageUrl: ""
+        });
+        jsonInput.value = JSON.stringify(data, null, 2);
+        handleJsonInputChange();
+        setTimeout(()=>editFormsContainer.lastChild?.scrollIntoView({behavior:'smooth'}), 100);
+      }catch(e){ showMessage("JSONエラーが発生しました。"); }
     }
 
     function buildQuestionsFromForm(){
       const questions = [];
-      document.querySelectorAll('.question-form-block').forEach((_, i)=>{
-        const qText = document.getElementById(`q-text-${i}`)?.value ?? "";
-        const qImg  = document.getElementById(`q-img-${i}`)?.value.trim() ?? "";
-        const aText = document.getElementById(`a-text-${i}`)?.value ?? "";
-        const aImg  = document.getElementById(`a-img-${i}`)?.value.trim() ?? "";
-        const bText = document.getElementById(`b-text-${i}`)?.value ?? "";
-        const bImg  = document.getElementById(`b-img-${i}`)?.value.trim() ?? "";
-        const ans   = document.querySelector(`input[name="ans-${i}"]:checked`)?.value || "A";
-        const expl  = document.getElementById(`expl-${i}`)?.value ?? "";
+      const blocks = document.querySelectorAll('.question-form-block');
+      blocks.forEach((_, i)=>{
+        const questionTextVal = document.getElementById(`question-text-edit-${i}`)?.value ?? "";
+        const optionATextVal = document.getElementById(`option-text-a-${i}`)?.value ?? "";
+        const optionBTextVal = document.getElementById(`option-text-b-${i}`)?.value ?? "";
+        const answerRadio = document.querySelector(`input[name="answer-${i}"]:checked`);
+        let originalQuestion = {};
+        try{
+          const originalData = JSON.parse(jsonInput.value.trim());
+          if(Array.isArray(originalData)) originalQuestion = { questions: originalData }.questions[i] || {};
+          else originalQuestion = originalData.questions[i] || {};
+        }catch(e){ }
 
         questions.push({
-          question: qText, questionImageUrl: qImg,
-          explanation: expl, answer: ans,
-          options: { A: { text: aText, imageUrl: aImg }, B: { text: bText, imageUrl: bImg } }
+          ...originalQuestion,
+          question: questionTextVal,
+          questionImageUrl: document.getElementById(`image-url-q-${i}`)?.value.trim() || "",
+          options: {
+            A: { text: optionATextVal, imageUrl: document.getElementById(`image-url-a-${i}`)?.value.trim() || "" },
+            B: { text: optionBTextVal, imageUrl: document.getElementById(`image-url-b-${i}`)?.value.trim() || "" }
+          },
+          answer: answerRadio?.value || "A"
         });
       });
       return questions;
     }
 
-    function renderEditForms(questions){
-      editFormsContainer.innerHTML = '';
-      questions.forEach((q, i) => {
-        const div = document.createElement('div');
-        div.className = 'space-y-4 p-4 border border-gray-200 rounded-lg bg-white question-form-block shadow-sm';
-        div.innerHTML = `
-          <div class="flex justify-between items-center bg-gray-50 p-2 rounded">
-            <h3 class="font-bold text-gray-700">問 ${i + 1}</h3>
-            <div class="flex gap-2 text-sm">
-              <button type="button" class="text-blue-600 hover:underline" onclick="moveQuestion(${i},-1)">↑</button>
-              <button type="button" class="text-blue-600 hover:underline" onclick="moveQuestion(${i},1)">↓</button>
-              <button type="button" class="text-red-600 hover:underline ml-2" onclick="deleteQuestion(${i})">削除</button>
-            </div>
-          </div>
-          <div>
-            <label class="text-xs font-bold text-gray-500">問題文</label>
-            <textarea id="q-text-${i}" class="w-full p-2 border rounded text-sm" rows="2" oninput="syncJsonFromForm()">${q.question}</textarea>
-            <input type="text" id="q-img-${i}" class="w-full p-2 mt-1 border rounded text-xs" placeholder="画像URL (Drive可)" value="${q.questionImageUrl}" oninput="syncJsonFromForm()">
-          </div>
-          <div class="grid grid-cols-2 gap-4">
-            <div class="p-2 border rounded ${q.answer==='A'?'bg-green-50 border-green-300':''}">
-              <div class="flex items-center gap-2 mb-1">
-                <input type="radio" name="ans-${i}" value="A" ${q.answer==='A'?'checked':''} onchange="syncJsonFromForm(); renderEditForms(buildQuestionsFromForm())">
-                <span class="text-xs font-bold">選択肢A (正解)</span>
-              </div>
-              <textarea id="a-text-${i}" class="w-full p-1 border rounded text-sm" rows="2" oninput="syncJsonFromForm()">${q.options?.A?.text||''}</textarea>
-              <input type="text" id="a-img-${i}" class="w-full p-1 mt-1 border rounded text-xs" placeholder="画像URL" value="${q.options?.A?.imageUrl||''}" oninput="syncJsonFromForm()">
-            </div>
-            <div class="p-2 border rounded ${q.answer==='B'?'bg-green-50 border-green-300':''}">
-              <div class="flex items-center gap-2 mb-1">
-                <input type="radio" name="ans-${i}" value="B" ${q.answer==='B'?'checked':''} onchange="syncJsonFromForm(); renderEditForms(buildQuestionsFromForm())">
-                <span class="text-xs font-bold">選択肢B (正解)</span>
-              </div>
-              <textarea id="b-text-${i}" class="w-full p-1 border rounded text-sm" rows="2" oninput="syncJsonFromForm()">${q.options?.B?.text||''}</textarea>
-              <input type="text" id="b-img-${i}" class="w-full p-1 mt-1 border rounded text-xs" placeholder="画像URL" value="${q.options?.B?.imageUrl||''}" oninput="syncJsonFromForm()">
-            </div>
-          </div>
-          <div>
-            <label class="text-xs font-bold text-gray-500">解説</label>
-            <textarea id="expl-${i}" class="w-full p-2 border rounded text-sm" rows="2" oninput="syncJsonFromForm()">${q.explanation||''}</textarea>
-          </div>
-        `;
-        editFormsContainer.appendChild(div);
-      });
-    }
+    // ★LocalStorageへの保存
+    function saveQuiz(){
+      const requestedName = quizNameEdit.value.trim();
+      if(!requestedName){ showMessage("クイズ名を入力してください。"); return; }
 
-    // グローバル関数への割り当て（HTML内のonclick用）
-    window.moveQuestion = moveQuestion;
-    window.deleteQuestion = deleteQuestion;
-    window.syncJsonFromForm = syncJsonFromForm;
-    window.renderEditForms = renderEditForms;
-    window.buildQuestionsFromForm = buildQuestionsFromForm;
-
-    // --- ローカルストレージ & データ操作 ---
-    function updateLocalList(){
-      savedQuizSelect.innerHTML = '<option value="">選択してください...</option>';
-      const keys = [];
-      for(let i=0; i<localStorage.length; i++){
-        const key = localStorage.key(i);
-        if(key.startsWith(STORAGE_KEY_PREFIX)) keys.push(key.replace(STORAGE_KEY_PREFIX, ''));
-      }
-      keys.sort().forEach(k => {
-        const op = document.createElement('option');
-        op.value = k; op.textContent = k;
-        savedQuizSelect.appendChild(op);
-      });
-    }
-
-    function saveToLocal(){
-      const name = quizNameEdit.value.trim();
-      if(!name){ showMessage("クイズ名を入力してください"); return; }
-      const qs = buildQuestionsFromForm();
-      if(qs.length === 0){ showMessage("問題がありません"); return; }
+      const newQuestions = buildQuestionsFromForm();
+      if(newQuestions.length === 0){ showMessage("問題がありません。"); return; }
       
-      const data = { questions: qs, updatedAt: new Date().toISOString() };
-      try {
-        localStorage.setItem(STORAGE_KEY_PREFIX + name, JSON.stringify(data));
-        showMessage(`「${name}」をブラウザに保存しました`, 3000, 'success');
-        updateLocalList();
-        syncJsonFromForm(); // JSON欄も更新
-      } catch(e) {
-        showMessage("保存できませんでした (容量オーバー等)");
-      }
+      const norm = (u)=> normalizeImageUrl(u||"").url || "";
+      newQuestions.forEach(q=>{
+        q.questionImageUrl = norm(q.questionImageUrl);
+        if(q.options?.A) q.options.A.imageUrl = norm(q.options.A.imageUrl);
+        if(q.options?.B) q.options.B.imageUrl = norm(q.options.B.imageUrl);
+      });
+
+      const finalQuizData = { questions: newQuestions, updatedAt: new Date().toISOString() };
+      
+      saveQuizToStorage(requestedName, finalQuizData);
+      
+      loadedQuizName = requestedName;
+      jsonInput.value = JSON.stringify(finalQuizData, null, 2);
+      showMessage("保存しました (ブラウザ内に保存)。", 3000, 'success');
+    }
+    
+    // 削除機能
+    function deleteSelectedQuiz(){
+        const quizName = quizListSelect.value;
+        if(!quizName){ showMessage("削除するクイズを選択してください。"); return; }
+        if(!confirm(`本当に「${quizName}」を削除しますか？`)) return;
+        deleteQuizFromStorage(quizName);
+        showMessage("削除しました。", 3000, 'success');
     }
 
-    function loadLocal(mode){
-      const name = savedQuizSelect.value;
-      if(!name) return;
-      const raw = localStorage.getItem(STORAGE_KEY_PREFIX + name);
-      if(!raw) return;
-      try {
-        const data = JSON.parse(raw);
-        if(mode === 'edit'){
+    function loadQuizForEditing(){
+      const quizName = quizListSelect.value;
+      if(!quizName){ showMessage("編集するクイズを選択するか、新規作成してください。"); return; }
+      
+      const quizData = getQuizFromStorage(quizName);
+      if(quizData){
           resetEditScreen();
-          quizNameEdit.value = name;
-          renderEditForms(data.questions || []);
-          syncJsonFromForm();
+          quizNameEdit.value = quizName;
+          loadedQuizName = quizName;
+          jsonInput.value = JSON.stringify(quizData, null, 2);
           showScreen('edit');
-        } else {
-          startQuiz(data);
-        }
-      } catch(e) { showMessage("読み込みエラー"); }
-    }
-
-    function deleteLocal(){
-      const name = savedQuizSelect.value;
-      if(!name) return;
-      if(confirm(`「${name}」を削除しますか？`)){
-        localStorage.removeItem(STORAGE_KEY_PREFIX + name);
-        updateLocalList();
-        showMessage("削除しました", 3000, 'info');
+          jsonInput.dispatchEvent(new Event('input', { bubbles:true }));
+      } else {
+          showMessage("データの読み込みに失敗しました。");
       }
     }
 
-    // --- インポート & コピー ---
-    function importAndPlay(){
-      const txt = importJsonArea.value.trim();
-      if(!txt){ showMessage("JSONを入力してください"); return; }
-      try {
-        const data = JSON.parse(txt);
-        if(!data.questions || !Array.isArray(data.questions)) throw new Error("形式が違います");
-        startQuiz(data);
-      } catch(e) { showMessage("JSON形式エラー: " + e.message); }
-    }
-
-    async function copyJsonToClipboard(){
-      const txt = jsonInput.value;
-      if(!txt) return;
-      try {
-        await navigator.clipboard.writeText(txt);
-        showMessage("コピーしました！ iPadに送ってください。", 3000, 'success');
-      } catch(e) {
-        jsonInput.select();
-        document.execCommand('copy');
-        showMessage("テキストを選択しました。手動でコピーしてください。", 3000, 'info');
+    function loadAndStartQuiz(){
+      const quizName = quizListSelect.value;
+      if(!quizName){ showMessage("開始するクイズを選択してください。"); return; }
+      
+      const quizData = getQuizFromStorage(quizName);
+      if(quizData && quizData.questions && quizData.questions.length > 0){
+          currentQuizData = quizData;
+          resetQuizState();
+          displayQuestion(0);
+          showScreen('quiz');
+      } else {
+          showMessage("クイズデータが見つかりません。");
       }
     }
 
-    // --- クイズ実行ロジック ---
-    function startQuiz(data){
-      currentQuizData = data;
+    function resetQuizState(){
       currentQuestionIndex = 0; score = 0;
-      displayQuestion(0);
-      showScreen('quiz');
+      feedbackContainer.classList.add('hidden');
+      nextQuestionBtn.classList.add('hidden');
+      optionABtn.disabled = false; optionBBtn.disabled = false;
+      optionsContainer.classList.remove('hidden');
     }
+
+    function nl2br(s){ return (s ?? "").toString().replace(/\n/g,"<br>"); }
 
     function displayQuestion(index){
-      const q = currentQuizData.questions[index];
-      resetFeedback();
-      
-      // 画像
-      if(q.questionImageUrl){
+      if(!currentQuizData?.questions) return;
+      const question = currentQuizData.questions[index];
+      if(!question) return;
+
+      const hasQImg = !!(question.questionImageUrl && /^https?:\/\//.test(question.questionImageUrl));
+      if(hasQImg){
         questionImgContainer.classList.remove('hidden');
-        updatePreviewImage(q.questionImageUrl, questionImg);
-      } else {
+        updatePreviewImage(question.questionImageUrl, questionImg);
+      }else{
         questionImgContainer.classList.add('hidden');
+        updatePreviewImage('', questionImg);
       }
-
-      // テキスト (改行対応)
-      questionText.innerHTML = (q.question||"").replace(/\n/g, "<br>");
-
-      // 選択肢
-      optionAText.innerHTML = (q.options.A.text||"").replace(/\n/g, "<br>");
-      optionBText.innerHTML = (q.options.B.text||"").replace(/\n/g, "<br>");
-      
-      updatePreviewImage(q.options.A.imageUrl, optionAImg);
-      updatePreviewImage(q.options.B.imageUrl, optionBImg);
-    }
-
-    function resetFeedback(){
+      questionText.innerHTML = nl2br(question.question);
+      optionAText.innerHTML = nl2br(question.options.A.text);
+      if(updatePreviewImage(question.options.A.imageUrl, optionAImg)){
+        optionABtn.classList.add('min-h-[10rem]'); optionABtn.classList.remove('py-6');
+      }else{
+        optionABtn.classList.remove('min-h-[10rem]'); optionABtn.classList.add('py-6');
+      }
+      optionBText.innerHTML = nl2br(question.options.B.text);
+      if(updatePreviewImage(question.options.B.imageUrl, optionBImg)){
+        optionBBtn.classList.add('min-h-[10rem]'); optionBBtn.classList.remove('py-6');
+      }else{
+        optionBBtn.classList.remove('min-h-[10rem]'); optionBBtn.classList.add('py-6');
+      }
       feedbackContainer.classList.add('hidden');
+      quizBackToHomeBtn.classList.add('hidden');
+      nextQuestionBtn.classList.add('hidden');
       optionABtn.disabled = false; optionBBtn.disabled = false;
-      optionABtn.classList.remove('opacity-50', 'ring-4', 'ring-green-400', 'ring-red-400');
-      optionBBtn.classList.remove('opacity-50', 'ring-4', 'ring-green-400', 'ring-red-400');
+      optionABtn.classList.remove('border-green-500','border-red-500','border-gray-400');
+      optionBBtn.classList.remove('border-green-500','border-red-500','border-gray-400');
     }
 
-    function checkAnswer(selected){
+    function checkAnswer(selectedOption){
       optionABtn.disabled = true; optionBBtn.disabled = true;
-      const q = currentQuizData.questions[currentQuestionIndex];
-      const isCorrect = (selected === q.answer);
-      
-      if(isCorrect) score++;
-      
-      // UI feedback
-      feedbackResult.textContent = isCorrect ? "正解！" : "ざんねん…";
-      feedbackResult.className = isCorrect ? "text-2xl font-bold text-green-500" : "text-2xl font-bold text-red-500";
-      feedbackExplanation.innerHTML = (q.explanation || "").replace(/\n/g, "<br>");
-      
-      feedbackContainer.classList.remove('hidden');
-      
-      // ボタンの色付け
-      const btn = selected === 'A' ? optionABtn : optionBBtn;
-      btn.classList.add('ring-4', isCorrect ? 'ring-green-400' : 'ring-red-400');
-      (selected === 'A' ? optionBBtn : optionABtn).classList.add('opacity-50');
-    }
-
-    function nextQuestion(){
-      currentQuestionIndex++;
-      if(currentQuestionIndex < currentQuizData.questions.length){
-        displayQuestion(currentQuestionIndex);
-      } else {
-        showFinalResult();
+      const question = currentQuizData.questions[currentQuestionIndex];
+      const correct = question.answer;
+      if(selectedOption === correct){
+        feedbackResult.textContent = "正解！";
+        feedbackResult.className = "text-2xl font-bold text-green-500";
+        score++;
+      }else{
+        feedbackResult.textContent = "ざんねん…";
+        feedbackResult.className = "text-2xl font-bold text-red-500";
       }
+      feedbackExplanation.innerHTML = nl2br(question.explanation || "");
+      feedbackContainer.classList.remove('hidden');
+      nextQuestionBtn.classList.remove('hidden');
+      quizBackToHomeBtn.classList.remove('hidden');
     }
 
-    function showFinalResult(){
-      questionText.textContent = "終了！";
+    function displayNextQuestion(){
+      currentQuestionIndex++;
+      if(currentQuestionIndex < currentQuizData.questions.length) displayQuestion(currentQuestionIndex);
+      else showFinalScore();
+    }
+
+    function showFinalScore(){
+      questionText.textContent = `クイズ終了！あなたのスコアは...`;
+      optionsContainer.classList.add('hidden');
       questionImgContainer.classList.add('hidden');
-      document.getElementById('options-container').classList.add('hidden'); // 選択肢を隠す
-      
       feedbackResult.textContent = `${currentQuizData.questions.length}問中 ${score}問正解！`;
       feedbackResult.className = "text-3xl font-bold text-blue-600";
-      feedbackExplanation.textContent = "おつかれさまでした。";
+      feedbackExplanation.textContent = "お疲れ様でした。";
       feedbackContainer.classList.remove('hidden');
       nextQuestionBtn.classList.add('hidden');
+      quizBackToHomeBtn.classList.remove('hidden');
     }
 
-    // --- 初期化 & イベントリスナー ---
-    document.getElementById('create-new-quiz-btn').addEventListener('click', ()=>{
-      resetEditScreen();
-      showScreen('edit');
-    });
-    document.getElementById('back-to-home-btn').addEventListener('click', ()=>showScreen('home'));
-    document.getElementById('quiz-back-to-home-btn').addEventListener('click', ()=>{
-      showScreen('home');
-      document.getElementById('options-container').classList.remove('hidden'); // 復活させる
-    });
-
-    document.getElementById('add-question-btn').addEventListener('click', addQuestion);
-    document.getElementById('save-local-btn').addEventListener('click', saveToLocal);
-    document.getElementById('copy-json-btn').addEventListener('click', copyJsonToClipboard);
-
-    document.getElementById('load-local-edit-btn').addEventListener('click', ()=>loadLocal('edit'));
-    document.getElementById('load-local-play-btn').addEventListener('click', ()=>loadLocal('play'));
-    document.getElementById('delete-local-btn').addEventListener('click', deleteLocal);
-
-    document.getElementById('import-play-btn').addEventListener('click', importAndPlay);
-
-    document.getElementById('option-a-btn').addEventListener('click', ()=>checkAnswer('A'));
-    document.getElementById('option-b-btn').addEventListener('click', ()=>checkAnswer('B'));
-    document.getElementById('next-question-btn').addEventListener('click', nextQuestion);
-
-    // テキストエリアの同期
-    jsonInput.addEventListener('input', ()=>{
-      try {
-        const d = JSON.parse(jsonInput.value);
-        if(d.questions) renderEditForms(d.questions);
-      } catch(e){}
-    });
-
-    updateLocalList();
-    showScreen('home');
+    // --- 初期化 ---
+    window.onload = () => { 
+        setupEventListeners(); 
+        showScreen('home'); 
+        updateQuizListUI();
+    };
   </script>
 </body>
 </html>
